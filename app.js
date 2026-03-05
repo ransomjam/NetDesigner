@@ -1471,10 +1471,10 @@ function parseGeneratedChildren(parent, startZIndex) {
     }
 
     // Parse dimensions — handle px, %, and calc() values
-    let w = parseDimension(style.width, state.canvasW) || 100;
-    let h = parseDimension(style.height, state.canvasH) || 100;
-    let x = parseInt(style.left) || 0;
-    let y = parseInt(style.top) || 0;
+    let w = parseDimension(style.width, state.canvasW) || Math.round(child.getBoundingClientRect().width) || 100;
+    let h = parseDimension(style.height, state.canvasH) || Math.round(child.getBoundingClientRect().height) || 100;
+    let x = parseFloat(style.left) || 0;
+    let y = parseFloat(style.top) || 0;
 
     // Extract visual styles that should be on the wrapper
     const boxShadow = style.boxShadow || '';
@@ -1485,26 +1485,18 @@ function parseGeneratedChildren(parent, startZIndex) {
     // We also need to copy visual styles that were on the original element.
     let htmlContent = '';
     if (type === 'html') {
-      // Build a clean inner wrapper that preserves visual styles but NOT positioning
-      const visualStyles = [];
-      if (style.background) visualStyles.push(`background: ${style.background}`);
-      else if (style.backgroundColor) visualStyles.push(`background-color: ${style.backgroundColor}`);
-      if (style.boxShadow) visualStyles.push(`box-shadow: ${style.boxShadow}`);
-      if (style.textShadow) visualStyles.push(`text-shadow: ${style.textShadow}`);
-      if (style.backdropFilter) visualStyles.push(`backdrop-filter: ${style.backdropFilter}`);
-      if (style.borderRadius) visualStyles.push(`border-radius: ${style.borderRadius}`);
-      if (style.padding) visualStyles.push(`padding: ${style.padding}`);
-      if (style.display && style.display !== 'block') visualStyles.push(`display: ${style.display}`);
-      if (style.alignItems) visualStyles.push(`align-items: ${style.alignItems}`);
-      if (style.justifyContent) visualStyles.push(`justify-content: ${style.justifyContent}`);
-      if (style.flexDirection) visualStyles.push(`flex-direction: ${style.flexDirection}`);
-      if (style.gap) visualStyles.push(`gap: ${style.gap}`);
-      if (style.textAlign) visualStyles.push(`text-align: ${style.textAlign}`);
-      if (style.overflow) visualStyles.push(`overflow: ${style.overflow}`);
+      // Preserve Claude output as faithfully as possible while letting the editor wrapper control placement.
+      const clone = child.cloneNode(true);
+      clone.style.position = 'relative';
+      clone.style.left = '0px';
+      clone.style.top = '0px';
+      clone.style.right = 'auto';
+      clone.style.bottom = 'auto';
+      clone.style.margin = '0';
+      clone.style.width = '100%';
+      clone.style.height = '100%';
 
-      visualStyles.push('width: 100%', 'height: 100%', 'position: relative');
-
-      htmlContent = `<div style="${visualStyles.join('; ')};">${child.innerHTML}</div>`;
+      htmlContent = clone.outerHTML;
     }
 
     const el = {
@@ -1701,7 +1693,7 @@ function exportAsHTML() {
       height: ${state.canvasH}px;
       position: relative;
       overflow: hidden;
-      background: #fff;
+      background: transparent;
     }
   </style>
 </head>
@@ -1726,14 +1718,10 @@ async function exportAsImage(format) {
     canvas.height = state.canvasH;
     const ctx = canvas.getContext('2d');
 
-    // Draw white background
-    ctx.fillStyle = '#FFFFFF';
-    ctx.fillRect(0, 0, state.canvasW, state.canvasH);
-
     // Create an SVG with foreignObject to render HTML
     const svgData = `<svg xmlns="http://www.w3.org/2000/svg" width="${state.canvasW}" height="${state.canvasH}">
       <foreignObject width="100%" height="100%">
-        <div xmlns="http://www.w3.org/1999/xhtml" style="width:${state.canvasW}px;height:${state.canvasH}px;position:relative;overflow:hidden;background:#fff;">
+        <div xmlns="http://www.w3.org/1999/xhtml" style="width:${state.canvasW}px;height:${state.canvasH}px;position:relative;overflow:hidden;background:transparent;">
           ${dom.canvas.innerHTML}
         </div>
       </foreignObject>
