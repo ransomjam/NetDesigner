@@ -882,10 +882,7 @@ function onCanvasDblClick(e) {
     if (!targetEl || !targetEl.textContent.trim()) return;
 
     targetEl.contentEditable = true;
-<<<<<<< ours
-=======
     targetEl.spellcheck = false;
->>>>>>> theirs
     targetEl.style.cursor = 'text';
     targetEl.focus();
 
@@ -910,14 +907,6 @@ function onCanvasDblClick(e) {
       el.text = textSpan?.textContent || '';
     });
   } else if (el.type === 'html') {
-<<<<<<< ours
-    // Edit the exact text block that was double-clicked, not just the first match.
-    const editableSelector = 'span, p, h1, h2, h3, h4, h5, h6, a, button, li, label, div';
-    let textEl = e.target.closest(editableSelector);
-
-    if (!textEl || !elDiv.contains(textEl) || !textEl.textContent.trim()) {
-      textEl = elDiv.querySelector(editableSelector);
-=======
     const validTags = new Set(['SPAN', 'P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'A', 'BUTTON', 'LI', 'LABEL', 'STRONG', 'EM', 'B', 'I', 'DIV']);
 
     const isEditableTextNode = (node) => {
@@ -937,7 +926,6 @@ function onCanvasDblClick(e) {
     if (!isEditableTextNode(textEl)) {
       textEl = Array.from(elDiv.querySelectorAll('span, p, h1, h2, h3, h4, h5, h6, a, button, li, label, strong, em, b, i, div'))
         .find(isEditableTextNode);
->>>>>>> theirs
     }
 
     enableInlineEditing(textEl, () => {
