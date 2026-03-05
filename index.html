@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NetDesigner — AI-Powered Design Studio</title>
+  <meta name="description"
+    content="Create stunning social media graphics, banners, and posts with AI-powered design generation. Drag, drop, and refine with Claude AI.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SPLASH / LOADING SCREEN                     -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="splash-screen" class="splash-screen">
+    <div class="splash-content">
+      <div class="splash-logo">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+          <rect width="56" height="56" rx="14" fill="url(#splashGrad)" />
+          <path d="M16 20h24v2H16z M16 26h18v2H16z M16 32h22v2H16z M28 38h12v2H28z" fill="white" opacity="0.9" />
+          <circle cx="40" cy="16" r="8" fill="#FCD34D" opacity="0.9" />
+          <path d="M38 16l1.5 1.5L43 14" stroke="#0F172A" stroke-width="1.5" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <defs>
+            <linearGradient id="splashGrad" x1="0" y1="0" x2="56" y2="56">
+              <stop stop-color="#6366F1" />
+              <stop offset="1" stop-color="#8B5CF6" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <span class="splash-title">NetDesigner</span>
+      </div>
+      <div class="splash-tagline">AI-Powered Design Studio</div>
+      <div class="splash-loader">
+        <div class="splash-loader-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- API KEY MODAL                               -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="api-key-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="10" fill="url(#keyGrad)" />
+          <path
+            d="M20 12a5 5 0 00-5 5c0 2.2 1.4 4 3.5 4.7V28h3v-6.3c2.1-.7 3.5-2.5 3.5-4.7a5 5 0 00-5-5zm0 7a2 2 0 110-4 2 2 0 010 4z"
+            fill="white" />
+          <defs>
+            <linearGradient id="keyGrad" x1="0" y1="0" x2="40" y2="40">
+              <stop stop-color="#F59E0B" />
+              <stop offset="1" stop-color="#EF4444" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <h2>Connect to Claude AI</h2>
+        <p>Enter your Anthropic API key to enable AI-powered design generation</p>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <label for="api-key-input">API Key</label>
+          <div class="input-wrapper">
+            <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
+            <button id="toggle-key-vis" class="icon-btn-sm" title="Toggle visibility">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
+          <span class="input-hint">Your key is stored locally and never sent to any server except Anthropic's
+            API.</span>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button id="save-api-key" class="btn btn-primary btn-glow">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 13l4 4L19 7" />
+          </svg>
+          Save & Continue
+        </button>
+        <button id="skip-api-key" class="btn btn-ghost">Skip for Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- MAIN APPLICATION                            -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="app" class="app" style="display:none;">
+
+    <!-- ─── TOP NAV BAR ─── -->
+    <header class="top-bar">
+      <div class="top-bar-left">
+        <div class="app-logo" id="logo-home">
+          <svg width="28" height="28" viewBox="0 0 56 56" fill="none">
+            <rect width="56" height="56" rx="14" fill="url(#navGrad)" />
+            <path d="M16 20h24v2H16z M16 26h18v2H16z M16 32h22v2H16z M28 38h12v2H28z" fill="white" opacity="0.9" />
+            <circle cx="40" cy="16" r="8" fill="#FCD34D" opacity="0.9" />
+            <defs>
+              <linearGradient id="navGrad" x1="0" y1="0" x2="56" y2="56">
+                <stop stop-color="#6366F1" />
+                <stop offset="1" stop-color="#8B5CF6" />
+              </linearGradient>
+            </defs>
+          </svg>
+          <span>NetDesigner</span>
+        </div>
+        <div class="breadcrumb" id="breadcrumb">
+          <span class="breadcrumb-sep">/</span>
+          <span id="project-name-display">Untitled Design</span>
+        </div>
+      </div>
+      <div class="top-bar-center">
+        <div class="toolbar" id="toolbar">
+          <button class="tool-btn active" data-tool="select" title="Select & Move (V)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" />
+            </svg>
+          </button>
+          <button class="tool-btn" data-tool="text" title="Add Text (T)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 7V4h16v3M9 20h6M12 4v16" />
+            </svg>
+          </button>
+          <button class="tool-btn" data-tool="rect" title="Rectangle (R)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+            </svg>
+          </button>
+          <button class="tool-btn" data-tool="circle" title="Circle (C)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10" />
+            </svg>
+          </button>
+          <button class="tool-btn" data-tool="line" title="Line (L)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="5" y1="19" x2="19" y2="5" />
+            </svg>
+          </button>
+          <div class="tool-divider"></div>
+          <button class="tool-btn" data-tool="hand" title="Pan Canvas (H)">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M18 11V6a2 2 0 00-4 0v1M14 10V4a2 2 0 00-4 0v6M10 10V6a2 2 0 00-4 0v8a8 8 0 0016 0v-3a2 2 0 00-4 0" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="top-bar-right">
+        <button class="btn btn-sm btn-ghost" id="btn-undo" title="Undo (Ctrl+Z)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 10h13a4 4 0 010 8H7" />
+            <path d="M7 6l-4 4 4 4" />
+          </svg>
+        </button>
+        <button class="btn btn-sm btn-ghost" id="btn-redo" title="Redo (Ctrl+Y)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 10H8a4 4 0 000 8h9" />
+            <path d="M17 6l4 4-4 4" />
+          </svg>
+        </button>
+        <div class="top-divider"></div>
+        <div class="zoom-controls">
+          <button class="btn btn-sm btn-ghost" id="btn-zoom-out" title="Zoom Out">−</button>
+          <span class="zoom-level" id="zoom-level">100%</span>
+          <button class="btn btn-sm btn-ghost" id="btn-zoom-in" title="Zoom In">+</button>
+        </div>
+        <div class="top-divider"></div>
+        <button class="btn btn-sm btn-outline" id="btn-export" title="Export Design">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          Export
+        </button>
+        <button class="btn btn-sm btn-primary" id="btn-save" title="Save Design">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+          </svg>
+          Save
+        </button>
+        <button class="avatar-btn" id="btn-settings" title="Settings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ─── MAIN WORKSPACE ─── -->
+    <div class="workspace">
+
+      <!-- LEFT PANEL: Design Sizes & Layers -->
+      <aside class="panel panel-left" id="panel-left">
+        <div class="panel-tabs">
+          <button class="panel-tab active" data-panel="sizes">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="2" y="3" width="20" height="14" rx="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+            Sizes
+          </button>
+          <button class="panel-tab" data-panel="layers">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
+            Layers
+          </button>
+          <button class="panel-tab" data-panel="assets">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+              <circle cx="8.5" cy="8.5" r="1.5" />
+              <polyline points="21 15 16 10 5 21" />
+            </svg>
+            Assets
+          </button>
+          <button class="panel-tab" data-panel="saved">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+            </svg>
+            Saved
+          </button>
+        </div>
+
+        <!-- SIZES PANEL -->
+        <div class="panel-content" id="panel-sizes">
+          <div class="panel-section">
+            <h3 class="panel-section-title">Social Media</h3>
+            <div class="size-grid">
+              <button class="size-card" data-w="1200" data-h="630" data-name="Facebook Post">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #1877F2, #0C5DC7);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                      d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">Facebook Post</span>
+                  <span class="size-card-dims">1200 × 630</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="1080" data-h="1080" data-name="Instagram Post">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                      d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">Instagram Post</span>
+                  <span class="size-card-dims">1080 × 1080</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="1080" data-h="1920" data-name="Instagram Story">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #F58529, #DD2A7B, #8134AF);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                      d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">Instagram Story</span>
+                  <span class="size-card-dims">1080 × 1920</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="1584" data-h="396" data-name="LinkedIn Banner">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #0A66C2, #004182);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                      d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">LinkedIn Banner</span>
+                  <span class="size-card-dims">1584 × 396</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="1200" data-h="627" data-name="LinkedIn Post">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #0A66C2, #004182);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                      d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">LinkedIn Post</span>
+                  <span class="size-card-dims">1200 × 627</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="1500" data-h="500" data-name="Twitter/X Banner">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #1DA1F2, #0C85D0);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                      d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">Twitter/X Banner</span>
+                  <span class="size-card-dims">1500 × 500</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="1200" data-h="675" data-name="Twitter/X Post">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #1DA1F2, #0C85D0);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                      d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">Twitter/X Post</span>
+                  <span class="size-card-dims">1200 × 675</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="1280" data-h="720" data-name="YouTube Thumbnail">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #FF0000, #CC0000);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
+                    <path
+                      d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">YouTube Thumbnail</span>
+                  <span class="size-card-dims">1280 × 720</span>
+                </div>
+              </button>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h3 class="panel-section-title">Print & Presentation</h3>
+            <div class="size-grid">
+              <button class="size-card" data-w="1920" data-h="1080" data-name="Presentation 16:9">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #6366F1, #8B5CF6);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" />
+                    <line x1="8" y1="21" x2="16" y2="21" />
+                    <line x1="12" y1="17" x2="12" y2="21" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">Presentation 16:9</span>
+                  <span class="size-card-dims">1920 × 1080</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="2480" data-h="3508" data-name="A4 Document">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #10B981, #059669);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">A4 Document</span>
+                  <span class="size-card-dims">2480 × 3508</span>
+                </div>
+              </button>
+              <button class="size-card" data-w="728" data-h="90" data-name="Web Banner">
+                <div class="size-card-icon" style="background: linear-gradient(135deg, #F59E0B, #D97706);">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+                    <rect x="2" y="7" width="20" height="10" rx="2" />
+                  </svg>
+                </div>
+                <div class="size-card-info">
+                  <span class="size-card-name">Web Banner</span>
+                  <span class="size-card-dims">728 × 90</span>
+                </div>
+              </button>
+            </div>
+          </div>
+          <div class="panel-section">
+            <h3 class="panel-section-title">Custom Size</h3>
+            <div class="custom-size-inputs">
+              <div class="input-group-inline">
+                <label>W</label>
+                <input type="number" id="custom-w" value="1200" min="100" max="5000">
+              </div>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                class="link-icon" id="link-dimensions">
+                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" />
+                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" />
+              </svg>
+              <div class="input-group-inline">
+                <label>H</label>
+                <input type="number" id="custom-h" value="630" min="100" max="5000">
+              </div>
+              <button class="btn btn-sm btn-primary" id="btn-custom-size">Apply</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- LAYERS PANEL -->
+        <div class="panel-content" id="panel-layers" style="display:none;">
+          <div class="layers-list" id="layers-list">
+            <div class="layers-empty">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                opacity="0.3">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+              <p>No elements yet</p>
+              <span>Generate a design or add elements manually</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAVED DESIGNS PANEL -->
+        <div class="panel-content" id="panel-saved" style="display:none;">
+          <div class="saved-list" id="saved-list">
+            <div class="layers-empty">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                opacity="0.3">
+                <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+              </svg>
+              <p>No saved designs</p>
+              <span>Save your first design to see it here</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ASSETS PANEL -->
+        <div class="panel-content" id="panel-assets" style="display:none;">
+          <div class="panel-section">
+            <h3 class="panel-section-title">Brand Colors</h3>
+            <div id="brand-colors-list" class="color-list"></div>
+            <button class="btn btn-sm btn-outline width-full" id="btn-add-color">+ Add Color</button>
+            <input type="color" id="hidden-color-picker" style="opacity:0; position:absolute; pointer-events:none;">
+          </div>
+          <div class="panel-section">
+            <h3 class="panel-section-title">Images / Logos</h3>
+            <div id="assets-image-list" class="asset-list"></div>
+            <button class="btn btn-sm btn-outline width-full" id="btn-upload-image">+ Upload Image</button>
+            <input type="file" id="asset-upload-input" accept="image/*" style="display:none">
+          </div>
+          <div class="panel-section">
+            <p class="input-hint">Note: Uploaded images and brand colors will be provided to the AI when generating a
+              new design. You can also add images manually to the canvas.</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CANVAS AREA -->
+      <main class="canvas-wrapper" id="canvas-wrapper">
+        <div class="canvas-scroll" id="canvas-scroll">
+          <div class="canvas-container" id="canvas-container">
+            <div class="canvas-size-label" id="canvas-size-label">1200 × 630 — Facebook Post</div>
+            <div class="design-canvas" id="design-canvas" style="width:1200px; height:630px;">
+              <!-- Design elements get rendered here -->
+              <div class="canvas-placeholder" id="canvas-placeholder">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"
+                  opacity="0.25">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+                <h3>Start Designing</h3>
+                <p>Choose a size, describe your design below, or add elements manually</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- RIGHT PANEL: Properties -->
+      <aside class="panel panel-right" id="panel-right">
+        <div class="panel-header-right">
+          <h3 id="props-title">Properties</h3>
+        </div>
+        <div class="panel-content" id="panel-properties">
+          <div class="props-empty" id="props-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+              opacity="0.3">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <line x1="9" y1="3" x2="9" y2="21" />
+            </svg>
+            <p>Select an element</p>
+            <span>Click on any element to view and edit its properties</span>
+          </div>
+          <div class="props-form" id="props-form" style="display:none;">
+            <div class="prop-group">
+              <label class="prop-label">Position</label>
+              <div class="prop-row">
+                <div class="prop-field">
+                  <span class="prop-field-label">X</span>
+                  <input type="number" id="prop-x" class="prop-input">
+                </div>
+                <div class="prop-field">
+                  <span class="prop-field-label">Y</span>
+                  <input type="number" id="prop-y" class="prop-input">
+                </div>
+              </div>
+            </div>
+            <div class="prop-group">
+              <label class="prop-label">Size</label>
+              <div class="prop-row">
+                <div class="prop-field">
+                  <span class="prop-field-label">W</span>
+                  <input type="number" id="prop-w" class="prop-input">
+                </div>
+                <div class="prop-field">
+                  <span class="prop-field-label">H</span>
+                  <input type="number" id="prop-h" class="prop-input">
+                </div>
+              </div>
+            </div>
+            <div class="prop-group">
+              <label class="prop-label">Rotation</label>
+              <div class="prop-row">
+                <div class="prop-field" style="flex:1">
+                  <span class="prop-field-label">°</span>
+                  <input type="number" id="prop-rotation" class="prop-input" value="0">
+                </div>
+              </div>
+            </div>
+            <div class="prop-group" id="prop-group-fill">
+              <label class="prop-label">Fill</label>
+              <div class="prop-row">
+                <input type="color" id="prop-fill" class="prop-color" value="#6366F1">
+                <input type="text" id="prop-fill-text" class="prop-input" value="#6366F1" style="flex:1">
+              </div>
+            </div>
+            <div class="prop-group" id="prop-group-border">
+              <label class="prop-label">Border</label>
+              <div class="prop-row">
+                <input type="color" id="prop-border-color" class="prop-color" value="#000000">
+                <input type="number" id="prop-border-width" class="prop-input" value="0" min="0" style="width:60px">
+                <span class="prop-unit">px</span>
+              </div>
+            </div>
+            <div class="prop-group" id="prop-group-radius">
+              <label class="prop-label">Border Radius</label>
+              <div class="prop-row">
+                <input type="number" id="prop-radius" class="prop-input" value="0" min="0" style="flex:1">
+                <span class="prop-unit">px</span>
+              </div>
+            </div>
+            <div class="prop-group" id="prop-group-opacity">
+              <label class="prop-label">Opacity</label>
+              <div class="prop-row">
+                <input type="range" id="prop-opacity" min="0" max="100" value="100" class="prop-slider">
+                <span class="prop-range-val" id="prop-opacity-val">100%</span>
+              </div>
+            </div>
+            <div class="prop-group" id="prop-group-text" style="display:none">
+              <label class="prop-label">Text</label>
+              <textarea id="prop-text-content" class="prop-textarea" rows="3"></textarea>
+              <div class="prop-row" style="margin-top:8px">
+                <select id="prop-font-family" class="prop-select">
+                  <option value="Inter">Inter</option>
+                  <option value="Arial">Arial</option>
+                  <option value="Georgia">Georgia</option>
+                  <option value="Times New Roman">Times New Roman</option>
+                  <option value="Courier New">Courier New</option>
+                  <option value="Outfit">Outfit</option>
+                </select>
+                <input type="number" id="prop-font-size" class="prop-input" value="16" min="8" max="200"
+                  style="width:60px">
+              </div>
+              <div class="prop-row" style="margin-top:8px">
+                <select id="prop-font-weight" class="prop-select" style="flex:1">
+                  <option value="300">Light</option>
+                  <option value="400" selected>Regular</option>
+                  <option value="500">Medium</option>
+                  <option value="600">Semibold</option>
+                  <option value="700">Bold</option>
+                  <option value="800">Extra Bold</option>
+                  <option value="900">Black</option>
+                </select>
+                <input type="color" id="prop-text-color" class="prop-color" value="#000000">
+              </div>
+            </div>
+            <div class="prop-actions">
+              <button class="btn btn-sm btn-ghost btn-danger" id="prop-delete">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+                </svg>
+                Delete
+              </button>
+              <button class="btn btn-sm btn-ghost" id="prop-duplicate">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                </svg>
+                Duplicate
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ─── AI PROMPT BAR (bottom) ─── -->
+    <div class="ai-bar" id="ai-bar">
+      <div class="ai-bar-inner">
+        <div class="ai-bar-glow"></div>
+        <div class="ai-indicator">
+          <div class="ai-dot"></div>
+          <span>Claude AI</span>
+        </div>
+        <div class="ai-input-wrapper">
+          <textarea id="ai-prompt"
+            placeholder="Describe a design... e.g. 'A modern LinkedIn banner with gradient blues, tech icons, and bold headline'"
+            rows="1"></textarea>
+        </div>
+        <div class="ai-bar-actions">
+          <select id="ai-mode" class="ai-mode-select">
+            <option value="generate">Generate New</option>
+            <option value="adjust">Adjust Current</option>
+          </select>
+          <button class="btn btn-primary btn-glow ai-send-btn" id="ai-send">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div class="ai-status" id="ai-status" style="display:none;">
+        <div class="ai-status-spinner"></div>
+        <span id="ai-status-text">Generating your design...</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- EXPORT MODAL                                -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="export-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="10" fill="url(#expGrad)" />
+          <path d="M20 12v10M15 17l5-5 5 5M13 26h14" stroke="white" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+          <defs>
+            <linearGradient id="expGrad" x1="0" y1="0" x2="40" y2="40">
+              <stop stop-color="#10B981" />
+              <stop offset="1" stop-color="#059669" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <h2>Export Design</h2>
+        <p>Download your design in your preferred format</p>
+      </div>
+      <div class="modal-body">
+        <div class="export-options">
+          <button class="export-option" data-format="png">
+            <div class="export-option-icon">PNG</div>
+            <div>
+              <strong>PNG Image</strong>
+              <span>Best for social media</span>
+            </div>
+          </button>
+          <button class="export-option" data-format="jpg">
+            <div class="export-option-icon">JPG</div>
+            <div>
+              <strong>JPG Image</strong>
+              <span>Smaller file size</span>
+            </div>
+          </button>
+          <button class="export-option" data-format="html">
+            <div class="export-option-icon">HTML</div>
+            <div>
+              <strong>HTML File</strong>
+              <span>Editable source code</span>
+            </div>
+          </button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="export-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SETTINGS MODAL                              -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div id="settings-modal" class="modal-overlay" style="display:none;">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="10" fill="url(#setGrad)" />
+          <circle cx="20" cy="20" r="5" stroke="white" stroke-width="2" />
+          <path
+            d="M20 11v-2M20 31v-2M29 20h2M9 20h-2M26.4 13.6l1.4-1.4M12.2 27.8l1.4-1.4M26.4 26.4l1.4 1.4M12.2 12.2l1.4 1.4"
+            stroke="white" stroke-width="2" stroke-linecap="round" />
+          <defs>
+            <linearGradient id="setGrad" x1="0" y1="0" x2="40" y2="40">
+              <stop stop-color="#6366F1" />
+              <stop offset="1" stop-color="#8B5CF6" />
+            </linearGradient>
+          </defs>
+        </svg>
+        <h2>Settings</h2>
+        <p>Configure your NetDesigner experience</p>
+      </div>
+      <div class="modal-body">
+        <div class="input-group">
+          <label for="settings-api-key">Claude API Key</label>
+          <div class="input-wrapper">
+            <input type="password" id="settings-api-key" placeholder="sk-ant-..." autocomplete="off">
+            <button class="icon-btn-sm" id="toggle-settings-key-vis" title="Toggle visibility">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div class="input-group" style="margin-top:16px">
+          <label for="settings-model">Model</label>
+          <select id="settings-model" class="prop-select" style="width:100%">
+            <option value="claude-sonnet-4-20250514">Claude Sonnet 4</option>
+            <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+            <option value="claude-3-haiku-20240307">Claude 3 Haiku (Faster)</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-primary" id="settings-save">Save Settings</button>
+        <button class="btn btn-ghost" id="settings-cancel">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+
+</html>
