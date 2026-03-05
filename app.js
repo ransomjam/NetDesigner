@@ -1163,11 +1163,12 @@ async function sendAIPrompt() {
   }
 
   const mode = dom.aiMode.value;
+  const isEditable = document.getElementById('ai-editable')?.checked ?? true;
   dom.aiStatus.style.display = 'flex';
   dom.aiStatusText.textContent = mode === 'generate' ? 'Generating your design...' : 'Adjusting your design...';
 
   try {
-    const systemPrompt = buildSystemPrompt(mode);
+    const systemPrompt = buildSystemPrompt(mode, isEditable);
     const userPrompt = buildUserPrompt(prompt, mode);
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -1209,7 +1210,7 @@ async function sendAIPrompt() {
       }
     }
 
-    applyGeneratedDesign(designHTML, mode);
+    applyGeneratedDesign(designHTML, mode, isEditable);
     showToast(mode === 'generate' ? 'Design generated!' : 'Design adjusted!', 'success');
     dom.aiPrompt.value = '';
     dom.aiPrompt.style.height = 'auto';
@@ -1222,8 +1223,8 @@ async function sendAIPrompt() {
   }
 }
 
-function buildSystemPrompt(mode) {
-  return `You are an expert web designer generating designs as HTML/CSS. The designs are for a canvas of exactly ${state.canvasW}px × ${state.canvasH}px for a "${state.canvasName}" format.
+function buildSystemPrompt(mode, isEditable = true) {
+  let promptText = `You are an expert web designer generating designs as HTML/CSS. The designs are for a canvas of exactly ${state.canvasW}px × ${state.canvasH}px for a "${state.canvasName}" format.
 
 CRITICAL RULES:
 1. Output ONLY the inner HTML that goes inside a container div of the given canvas size. DO NOT include <html>, <head>, <body>, or <style> tags at the top level.
@@ -1237,10 +1238,16 @@ CRITICAL RULES:
 9. Wrap the output in a single root <div> with position:relative; width:100%; height:100%; overflow:hidden.
 10. The background color/gradient of the design should be on the root div.
 11. Every visual element (text, shapes, icons) must be a separate div with position:absolute.
-12. If brand image assets are provided, use ONLY those exact image data URLs in <img> tags or CSS backgrounds. If none are provided, avoid external image URLs.
-13. Keep elements editor-friendly: avoid canvas/svg/pseudo-elements and represent each editable text/shape as its own absolutely-positioned div.
+12. If brand image assets are provided, use ONLY those exact image data URLs in <img> tags or CSS backgrounds. If none are provided, avoid external image URLs.`;
 
-Return ONLY the HTML wrapped in a \`\`\`html code block. No other text.`;
+  if (isEditable) {
+    promptText += `\n13. Keep elements editor-friendly: avoid canvas/svg/pseudo-elements and represent each editable text/shape as its own absolutely-positioned div.`;
+  } else {
+    promptText += `\n13. The design does NOT need to be editor-friendly. Since you do not need to separate elements for editing, you can use SVGs, canvas, complex masking, or anything else you'd like. The output will be treated as a single flat visual element.`;
+  }
+
+  promptText += `\n\nReturn ONLY the HTML wrapped in a \`\`\`html code block. No other text.`;
+  return promptText;
 }
 
 function buildBrandKitPrompt() {
@@ -1339,7 +1346,7 @@ function serializeCanvasForAI() {
   return `<div style="position:relative;width:100%;height:100%;overflow:hidden">${content}</div>`;
 }
 
-function applyGeneratedDesign(html, mode) {
+function applyGeneratedDesign(html, mode, isEditable = true) {
   // Clear existing elements if generating new
   if (mode === 'generate') {
     state.elements = [];
@@ -1355,6 +1362,41 @@ function applyGeneratedDesign(html, mode) {
 
   // Store generated HTML
   state.generatedHTML = html;
+
+  // If not editable, insert as a single flat element
+  if (!isEditable) {
+    const bgEl = {
+      id: 'el-gen-' + state.nextId++,
+      type: 'html',
+      x: 0,
+      y: 0,
+      w: state.canvasW,
+      h: state.canvasH,
+      fill: 'transparent',
+      borderColor: 'transparent',
+      borderWidth: 0,
+      borderRadius: 0,
+      opacity: 1,
+      rotation: 0,
+      text: '',
+      fontFamily: 'Inter',
+      fontSize: 16,
+      fontWeight: '400',
+      textColor: '#000000',
+      visible: true,
+      locked: false,
+      name: 'Generated Background / Flat Design',
+      zIndex: 0,
+      clipPath: '',
+      htmlContent: `<div style="position:relative;width:100%;height:100%;">${html}</div>`,
+    };
+    state.elements.push(bgEl);
+    renderElement(bgEl);
+    renderLayers();
+    hidePlaceholder();
+    pushHistory();
+    return;
+  }
 
   // Parse off-DOM: create a temporary container to analyze the HTML
   const tempContainer = document.createElement('div');
