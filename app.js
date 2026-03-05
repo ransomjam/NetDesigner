@@ -750,46 +750,46 @@ function onCanvasDblClick(e) {
   const el = state.elements.find(e => e.id === elDiv.dataset.elId);
   if (!el) return;
 
+  const enableInlineEditing = (targetEl, onSave) => {
+    if (!targetEl || !targetEl.textContent.trim()) return;
+
+    targetEl.contentEditable = true;
+    targetEl.style.cursor = 'text';
+    targetEl.focus();
+
+    const range = document.createRange();
+    range.selectNodeContents(targetEl);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    targetEl.addEventListener('blur', () => {
+      targetEl.contentEditable = false;
+      targetEl.style.cursor = '';
+      onSave();
+      showProperties(el.id);
+      pushHistory();
+    }, { once: true });
+  };
+
   if (el.type === 'text') {
-    // Start inline editing for text elements
     const textSpan = elDiv.querySelector('span');
-    if (textSpan) {
-      textSpan.contentEditable = true;
-      textSpan.focus();
-      // Select all text for easy replacement
-      const range = document.createRange();
-      range.selectNodeContents(textSpan);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      textSpan.addEventListener('blur', () => {
-        textSpan.contentEditable = false;
-        el.text = textSpan.textContent;
-        showProperties(el.id);
-        pushHistory();
-      }, { once: true });
-    }
+    enableInlineEditing(textSpan, () => {
+      el.text = textSpan?.textContent || '';
+    });
   } else if (el.type === 'html') {
-    // For html-type elements, find text nodes and make them editable
-    const textEl = elDiv.querySelector('span, p, h1, h2, h3, h4, h5, h6, a, div');
-    if (textEl && textEl.textContent.trim()) {
-      textEl.contentEditable = true;
-      textEl.style.cursor = 'text';
-      textEl.focus();
-      const range = document.createRange();
-      range.selectNodeContents(textEl);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      textEl.addEventListener('blur', () => {
-        textEl.contentEditable = false;
-        textEl.style.cursor = '';
-        el.text = elDiv.textContent?.trim() || '';
-        el.htmlContent = elDiv.innerHTML;
-        showProperties(el.id);
-        pushHistory();
-      }, { once: true });
+    // Edit the exact text block that was double-clicked, not just the first match.
+    const editableSelector = 'span, p, h1, h2, h3, h4, h5, h6, a, button, li, label, div';
+    let textEl = e.target.closest(editableSelector);
+
+    if (!textEl || !elDiv.contains(textEl) || !textEl.textContent.trim()) {
+      textEl = elDiv.querySelector(editableSelector);
     }
+
+    enableInlineEditing(textEl, () => {
+      el.text = elDiv.textContent?.trim() || '';
+      el.htmlContent = elDiv.innerHTML;
+    });
   }
 }
 
@@ -1094,7 +1094,15 @@ CRITICAL RULES:
 9. Wrap the output in a single root <div> with position:relative; width:100%; height:100%; overflow:hidden.
 10. The background color/gradient of the design should be on the root div.
 11. Every visual element (text, shapes, icons) must be a separate div with position:absolute.
+<<<<<<< ours
 12. Do NOT use images or external resources. Create shapes with CSS (border-radius, clip-path, gradients, etc.)
+=======
+12. If brand image assets are provided, use ONLY those exact image data URLs in <img> tags or CSS backgrounds. If none are provided, avoid external image URLs.
+13. Keep elements editor-friendly: avoid canvas/svg/pseudo-elements and represent each editable text/shape as its own absolutely-positioned div.
+<<<<<<< ours
+>>>>>>> theirs
+=======
+>>>>>>> theirs
 
 Return ONLY the HTML wrapped in a \`\`\`html code block. No other text.`;
 }
