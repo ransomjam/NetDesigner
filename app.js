@@ -1264,7 +1264,7 @@ ${imageAssets.join('\n')}`
 function buildUserPrompt(prompt, mode) {
   const brandKitContext = buildBrandKitPrompt();
   if (mode === 'adjust') {
-    const currentHTML = dom.canvas.innerHTML;
+    const currentHTML = serializeCanvasForAI();
     return `Here is the current design HTML:
 
 \`\`\`html
@@ -1287,6 +1287,56 @@ Brand kit context:
 ${brandKitContext}
 
 Generate a complete, visually stunning design with all elements positioned absolutely within the canvas.`;
+}
+
+function serializeCanvasForAI() {
+  const content = state.elements
+    .slice()
+    .sort((a, b) => a.zIndex - b.zIndex)
+    .map((el) => {
+      const baseStyles = [
+        'position:absolute',
+        `left:${Math.round(el.x)}px`,
+        `top:${Math.round(el.y)}px`,
+        `width:${Math.round(el.w)}px`,
+        `height:${Math.round(el.h)}px`,
+        `opacity:${el.opacity}`,
+        `z-index:${el.zIndex}`,
+      ];
+
+      if (el.rotation) baseStyles.push(`transform:rotate(${el.rotation}deg)`);
+      if (el.clipPath) baseStyles.push(`clip-path:${el.clipPath}`);
+
+      if (el.type === 'text') {
+        baseStyles.push('background:transparent');
+        return `<div style="${baseStyles.join(';')}"><span style="font-family:'${el.fontFamily}',sans-serif;font-size:${el.fontSize}px;font-weight:${el.fontWeight};color:${el.textColor};display:block;width:100%;height:100%;white-space:pre-wrap;word-break:break-word;line-height:1.3">${escapeHTML(el.text)}</span></div>`;
+      }
+
+      if (el.type === 'image') {
+        baseStyles.push(`background-image:url('${el.imageSrc}')`, 'background-size:cover', 'background-position:center');
+      } else {
+        baseStyles.push(`background:${el.fill}`);
+      }
+
+      if (el.type === 'circle') {
+        baseStyles.push('border-radius:50%');
+      } else if (el.borderRadius) {
+        baseStyles.push(`border-radius:${el.borderRadius}px`);
+      }
+
+      if (el.borderWidth > 0) {
+        baseStyles.push(`border:${el.borderWidth}px solid ${el.borderColor}`);
+      }
+
+      if (el.type === 'html') {
+        return `<div style="${baseStyles.join(';')}">${el.htmlContent}</div>`;
+      }
+
+      return `<div style="${baseStyles.join(';')}"></div>`;
+    })
+    .join('');
+
+  return `<div style="position:relative;width:100%;height:100%;overflow:hidden">${content}</div>`;
 }
 
 function applyGeneratedDesign(html, mode) {
@@ -1369,13 +1419,9 @@ function parseGeneratedChildren(parent, startZIndex) {
     const child = children[i];
     const style = child.style;
 
-    // Skip non-positioned elements
-    if (style.position !== 'absolute' && style.position !== 'relative') {
-      // If this non-positioned child has positioned children, recurse
-      if (child.children.length > 0) {
-        parseGeneratedChildren(child, zIdx);
-        zIdx += child.querySelectorAll('[style*="position"]').length;
-      }
+    // Keep parser stable: only top-level absolutely-positioned blocks become editable elements.
+    // Deep recursion fragments grouped components into scattered pieces.
+    if (style.position !== 'absolute') {
       continue;
     }
 
