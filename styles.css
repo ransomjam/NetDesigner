@@ -1203,7 +1203,7 @@ body {
 }
 
 .design-canvas {
-  background: #FFFFFF;
+  background: transparent;
   position: relative;
   box-shadow:
     0 0 0 1px rgba(99, 102, 241, 0.15),
