@@ -172,6 +172,12 @@ function bindEvents() {
     dom.aiPrompt.style.height = Math.min(dom.aiPrompt.scrollHeight, 120) + 'px';
   });
 
+  // Brand kit controls
+  dom.btnAddColor.addEventListener('click', () => dom.hiddenColorPicker.click());
+  dom.hiddenColorPicker.addEventListener('input', (e) => addBrandColor(e.target.value));
+  dom.btnUploadImage.addEventListener('click', () => dom.assetUploadInput.click());
+  dom.assetUploadInput.addEventListener('change', handleAssetUpload);
+
   // Undo/Redo
   $('#btn-undo').addEventListener('click', undo);
   $('#btn-redo').addEventListener('click', redo);
@@ -220,6 +226,118 @@ function saveApiKey() {
 
 function toggleInputVis(input) {
   input.type = input.type === 'password' ? 'text' : 'password';
+}
+
+function addBrandColor(color) {
+  if (!color) return;
+  const normalized = color.toUpperCase();
+  if (state.brandColors.includes(normalized)) {
+    showToast('That brand color is already added', 'info');
+    return;
+  }
+  state.brandColors.push(normalized);
+  localStorage.setItem('nd_colors', JSON.stringify(state.brandColors));
+  renderBrandColors();
+}
+
+function removeBrandColor(color) {
+  state.brandColors = state.brandColors.filter(c => c !== color);
+  localStorage.setItem('nd_colors', JSON.stringify(state.brandColors));
+  renderBrandColors();
+}
+
+function renderBrandColors() {
+  if (!dom.brandColorsList) return;
+
+  if (state.brandColors.length === 0) {
+    dom.brandColorsList.innerHTML = '<span class="asset-empty-text">No brand colors yet</span>';
+    return;
+  }
+
+  dom.brandColorsList.innerHTML = state.brandColors.map(color => `
+    <div class="color-item" style="background:${color};" title="${color}">
+      <button class="delete-btn" data-color="${color}" title="Remove color">×</button>
+    </div>
+  `).join('');
+
+  dom.brandColorsList.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeBrandColor(btn.dataset.color);
+    });
+  });
+}
+
+function handleAssetUpload(e) {
+  const files = [...(e.target.files || [])];
+  if (!files.length) return;
+
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      state.assets.push({
+        id: 'asset-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        dataUrl: reader.result,
+      });
+      localStorage.setItem('nd_assets', JSON.stringify(state.assets));
+      renderAssets();
+    };
+    reader.readAsDataURL(file);
+  });
+
+  e.target.value = '';
+}
+
+function removeAsset(id) {
+  state.assets = state.assets.filter(a => a.id !== id);
+  localStorage.setItem('nd_assets', JSON.stringify(state.assets));
+  renderAssets();
+}
+
+function addAssetToCanvas(id) {
+  const asset = state.assets.find(a => a.id === id);
+  if (!asset) return;
+  createElement('image', {
+    w: 220,
+    h: 220,
+    fill: 'transparent',
+    imageSrc: asset.dataUrl,
+    name: asset.name,
+  });
+  showToast('Image added to canvas', 'success');
+}
+
+function renderAssets() {
+  if (!dom.assetsList) return;
+
+  if (state.assets.length === 0) {
+    dom.assetsList.innerHTML = '<span class="asset-empty-text">No images uploaded yet</span>';
+    return;
+  }
+
+  dom.assetsList.innerHTML = state.assets.map(asset => `
+    <div class="asset-item">
+      <div class="asset-preview" style="background-image:url('${asset.dataUrl}')"></div>
+      <div class="asset-info">
+        <span class="asset-name">${escapeHTML(asset.name)}</span>
+      </div>
+      <div class="asset-actions">
+        <button class="asset-btn" data-action="use" data-id="${asset.id}" title="Add to canvas">+</button>
+        <button class="asset-btn" data-action="delete" data-id="${asset.id}" title="Delete">×</button>
+      </div>
+    </div>
+  `).join('');
+
+  dom.assetsList.querySelectorAll('.asset-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.action === 'use') addAssetToCanvas(btn.dataset.id);
+      if (btn.dataset.action === 'delete') removeAsset(btn.dataset.id);
+    });
+  });
 }
 
 // ─── SETTINGS ─────────────────────────────────────────────────────
@@ -287,6 +405,7 @@ function switchPanel(panel) {
   $$('.panel-tab').forEach(t => t.classList.toggle('active', t.dataset.panel === panel));
   $('#panel-sizes').style.display = panel === 'sizes' ? 'block' : 'none';
   $('#panel-layers').style.display = panel === 'layers' ? 'block' : 'none';
+  $('#panel-assets').style.display = panel === 'assets' ? 'block' : 'none';
   $('#panel-saved').style.display = panel === 'saved' ? 'block' : 'none';
 }
 
@@ -314,7 +433,7 @@ function createElement(type, props = {}) {
   const id = 'el-' + state.nextId++;
   const el = {
     id,
-    type, // 'rect' | 'circle' | 'text' | 'line' | 'html'
+    type, // 'rect' | 'circle' | 'text' | 'line' | 'html' | 'image'
     x: props.x ?? 50,
     y: props.y ?? 50,
     w: props.w ?? (type === 'text' ? 200 : type === 'line' ? 200 : 150),
@@ -336,6 +455,7 @@ function createElement(type, props = {}) {
     zIndex: state.elements.length,
     clipPath: props.clipPath ?? '',
     htmlContent: props.htmlContent ?? '',
+    imageSrc: props.imageSrc ?? '',
   };
 
   state.elements.push(el);
@@ -396,6 +516,13 @@ function renderElement(el) {
     // Background and visual styles are on the inner wrapper div
     div.style.backgroundColor = 'transparent';
     div.style.border = 'none';
+  }
+
+  if (el.type === 'image') {
+    div.style.backgroundImage = `url('${el.imageSrc}')`;
+    div.style.backgroundSize = 'cover';
+    div.style.backgroundPosition = 'center';
+    div.style.backgroundColor = '#E2E8F0';
   }
 
   // Circle specific
@@ -495,6 +622,7 @@ function renderLayers() {
       text: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg>',
       line: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="19" x2="19" y2="5"/></svg>',
       html: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+      image: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>',
     };
 
     const visIcon = el.visible
@@ -1094,12 +1222,31 @@ CRITICAL RULES:
 9. Wrap the output in a single root <div> with position:relative; width:100%; height:100%; overflow:hidden.
 10. The background color/gradient of the design should be on the root div.
 11. Every visual element (text, shapes, icons) must be a separate div with position:absolute.
-12. Do NOT use images or external resources. Create shapes with CSS (border-radius, clip-path, gradients, etc.)
+12. If brand image assets are provided, use ONLY those exact image data URLs in <img> tags or CSS backgrounds. If none are provided, avoid external image URLs.
 
 Return ONLY the HTML wrapped in a \`\`\`html code block. No other text.`;
 }
 
+function buildBrandKitPrompt() {
+  const colorsText = state.brandColors.length
+    ? `Preferred brand colors: ${state.brandColors.join(', ')}`
+    : 'Preferred brand colors: none provided.';
+
+  const imageAssets = state.assets.slice(0, 3).map((asset, i) => {
+    const shortenedDataUrl = String(asset.dataUrl).slice(0, 12000);
+    return `${i + 1}. ${asset.name} (data URL, may be truncated): ${shortenedDataUrl}`;
+  });
+
+  const assetsText = imageAssets.length
+    ? `Brand images/logos to use in the design:
+${imageAssets.join('\n')}`
+    : 'Brand images/logos: none provided.';
+
+  return `${colorsText}\n${assetsText}`;
+}
+
 function buildUserPrompt(prompt, mode) {
+  const brandKitContext = buildBrandKitPrompt();
   if (mode === 'adjust') {
     const currentHTML = dom.canvas.innerHTML;
     return `Here is the current design HTML:
@@ -1110,12 +1257,18 @@ ${currentHTML}
 
 Please adjust the design based on this request: "${prompt}"
 
+Brand kit context:
+${brandKitContext}
+
 Keep all existing elements that weren't mentioned, and modify or add elements as requested. Return the COMPLETE updated design HTML.`;
   }
 
   return `Create a ${state.canvasName} design (${state.canvasW}×${state.canvasH}px) based on this description:
 
 "${prompt}"
+
+Brand kit context:
+${brandKitContext}
 
 Generate a complete, visually stunning design with all elements positioned absolutely within the canvas.`;
 }
